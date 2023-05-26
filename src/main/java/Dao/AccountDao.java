@@ -10,4 +10,5 @@ public interface AccountDao {
 	void addAccount(String username, String password) throws ClassNotFoundException, SQLException ;
 	
 	int findIdByUsername(String username) throws ClassNotFoundException, SQLException ;
+	
 }

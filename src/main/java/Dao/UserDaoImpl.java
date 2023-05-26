@@ -11,7 +11,7 @@ import Model.Role;
 import Model.User;
 
 public class UserDaoImpl implements UserDao {
-    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/?user=root";
+    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/TouristGuide";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "Project12321!";
 
@@ -24,9 +24,10 @@ public class UserDaoImpl implements UserDao {
 		Class.forName("com.mysql.jdbc.Driver");
 		Connection connection = this.getConnection();
 		
-		String query = "select * from User where phone_number = " + phoneNumber;
-		Statement statement = (Statement) connection.createStatement();
-		ResultSet resultSet = statement.executeQuery(query);
+		String query = "select * from Users where phone_number = ?";
+		PreparedStatement statement = connection.prepareStatement(query);
+		statement.setString(1, phoneNumber);
+		ResultSet resultSet = statement.executeQuery();
 		if (resultSet.next()) {
 			return true;
 		}
@@ -39,7 +40,7 @@ public class UserDaoImpl implements UserDao {
 		Class.forName("com.mysql.jdbc.Driver");
 		Connection connection = this.getConnection();
 		
-		String query = "INSERT INTO Users VALUES (?, ?, ?, ?, ?)";
+		String query = "INSERT INTO Users (first_name, last_name, phone_number, account_id, role) VALUES (?, ?, ?, ?, ?)";
 		PreparedStatement statement = connection.prepareStatement(query);
 		statement.setString(1, user.getFirstName());
 		statement.setString(2, user.getLastName());

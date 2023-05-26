@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
+import Dao.AccountDao;
 import Dao.AccountDaoImpl;
 import Dao.UserDao;
 import Dao.UserDaoImpl;
@@ -26,11 +27,11 @@ public class RegisterServlet extends HttpServlet {
 	private UserService userService;
 	
     public void init() {
-    	AccountDaoImpl accountDaoImpl = new AccountDaoImpl();
-    	UserDaoImpl userDaoImpl = new UserDaoImpl();
-    	
-    	accountService = new AccountService(accountDaoImpl);
-    	userService = new UserService(userDaoImpl);
+        AccountDao accountDao = new AccountDaoImpl();
+        UserDao userDao = new UserDaoImpl();
+
+        accountService = new AccountService(accountDao);
+        userService = new UserService(userDao);
     }
     
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -38,42 +39,74 @@ public class RegisterServlet extends HttpServlet {
 		String password = request.getParameter("password");
 		String firstName = request.getParameter("firstName");
 		String lastName = request.getParameter("lastName");
-		String phoneNumber = request.getParameter("phoneNumber");
+		String phoneNumber = request.getParameter("phone");
 		
+		System.out.println(username + " " + password + " " + firstName + " " + lastName + " " + phoneNumber);
+		int accountId;
 		try {
-			Account account = accountService.findByUsername(username);
+			accountId = accountService.findIdByUsername(username);
+		} catch (ClassNotFoundException | SQLException e) {
+			accountId = -1;
+		}		
+		System.out.println(" " + accountId);
+		
+		if (accountId != -1) {
 			// found in database
 			String warningMessage = "account with username specified already exists, please try another!";
 			request.setAttribute("warningMessage", warningMessage);
 			
 			RequestDispatcher requestDispatcher = request.getRequestDispatcher("JSP/register_page.jsp");
 			requestDispatcher.forward(request, response);
-		} catch (ClassNotFoundException | SQLException e) {
+		} else {
 			// not found in database
 			// let's check user table for the phone number..
-			
+			boolean exists;
 			try {
-				if (userService.checkPhoneNumberExistence(phoneNumber) == true) {
-					String warningMessage = "Phone number specified already exists, please try another!";
-					request.setAttribute("warningMessage", warningMessage);
-					
-					RequestDispatcher requestDispatcher = request.getRequestDispatcher("JSP/register_page.jsp");
-					requestDispatcher.forward(request, response);
-				} else {	
-					accountService.addAccount(username, password);
-					int accountId = accountService.findIdByUsername(username);
-					
-					User user = new User(firstName, lastName, phoneNumber, username, password, Role.USER);
-					userService.addUser(user, accountId);
-					response.sendRedirect("JSP/login_page.jsp"); 
-				}
-			} catch (ClassNotFoundException | SQLException | ServletException | IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				exists = userService.checkPhoneNumberExistence(phoneNumber);
+			} catch (ClassNotFoundException | SQLException e) {
+				exists = false;
 			}
 			
+			if (exists) {
+				String warningMessage = "Phone number specified already exists, please try another!";
+				request.setAttribute("warningMessage", warningMessage);
+				
+				RequestDispatcher requestDispatcher = request.getRequestDispatcher("JSP/register_page.jsp");
+				requestDispatcher.forward(request, response);
+			} else {	
+				
+				System.out.println("We are good");
+				try {
+					accountService.addAccount(username, password);
+				} catch (ClassNotFoundException | SQLException e) {
+					e.printStackTrace();
+				}
+				
+				try {
+					accountId = accountService.findIdByUsername(username);
+				} catch (ClassNotFoundException | SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				
+				User user = new User(firstName, lastName, phoneNumber, username, password, Role.USER);
+				try {
+					userService.addUser(user, accountId);
+				} catch (ClassNotFoundException | SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				
+				String warningMessage = "Congratulations! Your account has been created successfully!";
+				request.setAttribute("warningMessage", warningMessage);
+				
+				RequestDispatcher requestDispatcher = request.getRequestDispatcher("JSP/login_page.jsp");
+				requestDispatcher.forward(request, response);				
+			}
+
 		}
 		
 	}
-
 }

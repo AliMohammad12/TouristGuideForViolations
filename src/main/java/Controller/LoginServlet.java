@@ -35,11 +35,11 @@ public class LoginServlet extends HttpServlet {
 		}
 		
 		if (account == null) {
-			response.sendRedirect("JSP/login_page.jsp"); 
+			response.sendRedirect("/JSP/login_page.jsp"); 
 		} else if (account.getPassword() == password) {
 			//response.sendRedirect("JSP/welcome.jsp");
 		} else {
-			response.sendRedirect("JSP/login_page.jsp"); 
+			response.sendRedirect("/JSP/login_page.jsp"); 
 		}
 	}
 
